@@ -12,16 +12,17 @@
 ## 1. 它解决什么问题
 
 教材很厚，但复习时真正需要的是三件事：**先回忆、再验证、按遗忘曲线回来**。
-所以这个站不是把书搬上网，而是把 25 章压缩成 75 张「回忆卡」与 **682 道分层题（每章 27–28 道）**：
+所以这个站不是把书搬上网，而是把 25 章压缩成 **175 张知识点卡（每章 7 张）** 与 **682 道分层题（每章 27–28 道）**：
 
 | 层 | 内容 | 入口 |
 |---|---|---|
-| 章 | 25 章，每章有导语、考点标签、3 张回忆卡、27–28 道题 | `#/chapter/ch4` |
+| 章 | 25 章，每章有导语、考点标签、7 张知识点卡、27–28 道题 | `#/chapter/ch4` |
 | 卡 | 每张卡 = 一句提示 → 一句话定义 → 例子/机制 → 公式 → 速测题 | `#/knowledge/ch5-c1` |
 | 题 | 基础 / 进阶 / 疑难；选择、判断、问答、报表、**图形**五类 | 章节页「分层题库」 |
 | 图 | **8 道图形题**：13 张内联 SVG，含 6 张「移动 + 新旧均衡」变体 | 章节页 + `#/test` 图形题专项 |
 | 复习 | 利特纳盒子 5 层，间隔 1 → 2 → 4 → 8 → 16 天；**卡片与题目共用同一队列** | `#/review` |
 | 测 | 章节测试（10 题）、综合卷（20 题）、图形题专项、错题重做 | `#/test` |
+| 数据 | 学习数据摘要、进度导出/导入（JSON）、主题切换、离线说明 | `#/settings` |
 
 ---
 
@@ -48,6 +49,7 @@ money-banking/
 │   ├── router.js         parseHash / navigate / 页面标题
 │   ├── data.js           拍平 6 篇 → 章 / 卡 / 题索引，组卷、搜索、归一化
 │   ├── review.js         复习队列：卡片 + 题目统一按到期时间排队
+│   ├── backup.js         进度备份：导出 JSON、导入前逐条校验
 │   ├── store.js          利特纳盒子、掌握度、经验、成就（可在 Node 里直接跑）
 │   ├── charts.js         13 张 SVG 示意图（含移动与新旧均衡变体）
 │   ├── cheatsheet.js     公式速查数据
@@ -55,18 +57,28 @@ money-banking/
 │   └── views/
 │       ├── shell.js      顶栏、移动端导航、成就、toast
 │       ├── pages.js      首页 / 地图 / 章节 / 知识点 / 复习 / 速查
+│       ├── settings.js   设置与数据（导出/导入、主题、离线说明）
 │       └── tests.js      测试中心 / 测试会话 / 成绩页
 ├── data/
-│   ├── part1.js … part6.js   六篇正文（导语、卡片、原创题）
-│   └── extra/
-│       ├── ch01.js … ch25.js 每章 22 道扩充题
-│       └── _index.js         自动生成，汇总 25 章扩充题
+│   ├── part1.js … part6.js   六篇正文（导语、原始卡片、原创题）
+│   ├── extra/
+│   │   ├── ch01.js … ch25.js 每章 22 道扩充题
+│   │   └── _index.js         自动生成，汇总 25 章扩充题
+│   └── cards-extra/
+│       ├── ch01.js … ch25.js 每章 4 张扩充知识点卡
+│       └── _index.js         自动生成，汇总 25 章扩充卡
+├── manifest.webmanifest  PWA 清单
+├── icons/                192 / 512 应用图标
+├── sw.js                 自动生成：离线缓存与版本
 └── scripts/
     ├── check.mjs              数据校验 + 全页面渲染冒烟（Node）
     ├── check-extra.mjs        单章题库校验（题量、选项、答案分布、重复题干）
+    ├── check-cards.mjs        单章知识点校验（字段、标题重复、quiz 结构）
     ├── build-extra-index.mjs  扫描 data/extra 重建 _index.js
+    ├── build-cards-index.mjs  扫描 data/cards-extra 重建 _index.js
+    ├── build-sw.mjs           扫描静态资源生成 sw.js（缓存清单 + 指纹）
     ├── extract_office.py      从 pptx/docx 抽取讲义文本
-    └── qa.mjs                 真实浏览器：移动端视口、点击、截图、溢出与报错检查
+    └── qa.mjs                 真实浏览器：移动端视口、点击、截图、离线、溢出与报错检查
 ```
 
 ---
@@ -100,6 +112,7 @@ python -m http.server 8123
 | `#/test` | 测试中心：章节测试 / 综合卷 / 图形题专项 / 错题重做 / 错题集 / 薄弱表 | 单栏 |
 | `#/test/chapter/:id` · `#/test/weekly` | 答题会话与成绩页 | 单栏 760px |
 | `#/cheatsheet` | 公式与结论速查（18 条） | 单栏 |
+| `#/settings` | 设置与数据：导出/导入进度、主题、离线说明、清空 | 单栏 |
 
 窄屏（≤860px）自动切成单栏，正文在前、章节目录折叠，底部固定 5 项导航。
 
@@ -223,10 +236,19 @@ node scripts/check.mjs                             # 全站
 ## 7. 自检
 
 ```bash
-node scripts/check.mjs            # 全量：数据完整性 + 25 章逐页渲染冒烟（要求每章 ≥20 题）
-node scripts/check.mjs --partial  # 扩容过程中用：未满 20 题的章节只提示、不报错
+node scripts/check.mjs            # 全量：数据完整性 + 25 章逐页渲染冒烟（每章 ≥20 题、≥6 张卡）
+node scripts/check.mjs --partial  # 扩容过程中用：未达标的章节只提示、不报错
 node scripts/check-extra.mjs      # 单章题库校验（可传多个文件）
-node scripts/qa.mjs               # 需要 Chrome：桌面/移动视口截图、点击流程、横向溢出与 JS 报错
+node scripts/check-cards.mjs      # 单章知识点校验（可传多个文件）
+node scripts/qa.mjs               # 需要 Chrome：桌面/移动视口、点击流程、离线、溢出与 JS 报错
+```
+
+改完 data 目录的内容后，还要重建两个索引和 Service Worker：
+
+```bash
+node scripts/build-extra-index.mjs
+node scripts/build-cards-index.mjs
+node scripts/build-sw.mjs
 ```
 
 `qa.mjs` 会把截图写到项目外的 `../_research/shots/mb2/`（第 1 个参数改目录，第 2 个参数改被测地址，
@@ -266,7 +288,9 @@ git push -u origin main
 
 ## 9. 已知边界
 
-- 进度只在本机浏览器：换设备、换浏览器、清站点数据都会丢（没有后端，这是设计取舍）
+- 进度只在本机浏览器：换设备、换浏览器、清站点数据都会丢（没有后端，这是设计取舍）。
+  可以在 `#/settings` 导出 JSON，在新设备导入，手动迁移
+- 离线可用：首次打开后会注册 Service Worker，把页面与题库缓存到本地；`file://` 打开时不会注册
 - 题库里的 550 道扩充题是**按教材口径生成的应试向整理**，不是老师出题的原文；
   建议对照讲义过一遍，发现错题直接改 `data/extra/chNN.js` 里对应那条即可
 - 没有视频：教材配套视频的链接需要你自己补，`cards` 里加字段再接一个 `<iframe>` 即可

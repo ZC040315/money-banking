@@ -15,6 +15,7 @@ const KNOWN = {
   review: 'review',
   test: 'test',
   cheatsheet: 'cheatsheet',
+  settings: 'settings',
 }
 
 export function parseHash(hash) {
@@ -65,4 +66,5 @@ export const TITLES = {
   'test-chapter': '章节测试 · 货币金融学',
   'test-weekly': '综合卷 · 货币金融学',
   cheatsheet: '公式速查 · 货币金融学',
+  settings: '设置与数据 · 货币金融学',
 }

@@ -311,6 +311,47 @@ await evaluate('document.querySelector(".practice")?.scrollIntoView({ block: "st
 await sleep(300)
 await shot('chapter-filter-chart', { full: false })
 
+// 设置页：导出进度
+await goto(`${BASE}#/settings`)
+await shot('settings')
+await evaluate('document.querySelector("[data-action=export-progress]")?.click()')
+await sleep(400)
+const exportStatus = await evaluate('document.querySelector("#backup-status")?.textContent || ""')
+if (!exportStatus.includes('已导出')) pageErrors.push('导出进度没有触发（状态栏未更新）')
+await shot('settings-exported', { full: false })
+
+// 离线：Service Worker 接管后断网仍能打开
+await goto(`${BASE}#/`)
+try {
+  await evaluate('navigator.serviceWorker.ready.then(() => true)')
+  await sleep(500)
+  await send('Network.enable')
+  await send('Network.emulateNetworkConditions', {
+    offline: true,
+    latency: 0,
+    downloadThroughput: 0,
+    uploadThroughput: 0,
+  })
+  await send('Page.reload')
+  await sleep(1500)
+  const offlineMounted = await evaluate(
+    '!!(document.querySelector("#app") && document.querySelector("#app").children.length)',
+  )
+  if (!offlineMounted) pageErrors.push('离线状态下页面未挂载')
+  await shot('offline-home', { full: false })
+} catch (error) {
+  pageErrors.push(`离线测试失败：${error.message}`)
+} finally {
+  await send('Network.emulateNetworkConditions', {
+    offline: false,
+    latency: 0,
+    downloadThroughput: -1,
+    uploadThroughput: -1,
+  })
+  await send('Page.reload')
+  await sleep(1200)
+}
+
 // ---------------- 移动端 ----------------
 console.log('移动端 390×844')
 await setViewport(390, 844, true)
@@ -334,6 +375,9 @@ await goto(`${BASE}#/test`)
 await evaluate('document.querySelector("[data-action=start-chapter-test]")?.click()')
 await sleep(600)
 await shot('m-session', { full: false })
+
+await goto(`${BASE}#/settings`)
+await shot('m-settings')
 
 // ---------------- 汇总 ----------------
 console.log('')

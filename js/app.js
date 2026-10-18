@@ -12,6 +12,7 @@ import {
   levelProgress,
 } from './store.js'
 import { buildReviewQueue } from './review.js'
+import { buildBackup, parseBackup, applyBackup } from './backup.js'
 import { cards, curriculum, chapterById, cardById, questionById, chartQuestionPool } from './data.js'
 import { chapterQuiz, weeklyQuiz, testCenter, testSession, mistakeEntries } from './views/tests.js'
 import { navbar, mobileNav, toast, xpToast } from './views/shell.js'
@@ -24,6 +25,7 @@ import {
   reviewPage,
   cheatsheetPage,
 } from './views/pages.js'
+import { settingsPage } from './views/settings.js'
 
 const app = document.getElementById('app')
 const toastRoot = document.getElementById('toasts')
@@ -133,6 +135,9 @@ function render() {
     case 'cheatsheet':
       detail = cheatsheetPage(ctx)
       break
+    case 'settings':
+      detail = settingsPage(ctx)
+      break
     default:
       detail = `<div class="empty-state"><p>页面不存在。</p></div>`
       browse = false
@@ -156,6 +161,11 @@ function render() {
 function renderToasts() {
   if (!toastRoot) return
   toastRoot.innerHTML = ui.toasts.map((item) => (item.kind === 'xp' ? xpToast(item.gained) : toast(item))).join('')
+}
+
+function setBackupStatus(message) {
+  const el = document.getElementById('backup-status')
+  if (el) el.textContent = message
 }
 
 function pushToast(items, xpGained = 0) {
@@ -466,6 +476,35 @@ document.addEventListener('click', (event) => {
       ui.map = { scale: 1, x: 0, y: 0 }
       applyMapTransform()
       return
+    case 'export-progress': {
+      const payload = buildBackup()
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const now = new Date()
+      const name = `money-banking-${now.getFullYear()}${String(now.getMonth() + 1).padStart(
+        2,
+        '0',
+      )}${String(now.getDate()).padStart(2, '0')}.json`
+      const link = document.createElement('a')
+      link.href = url
+      link.download = name
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 1500)
+      setBackupStatus(`已导出 ${name}（${Object.keys(payload.state.progress).length} 条记录）`)
+      return
+    }
+    case 'set-theme': {
+      const next = el.dataset.theme
+      if (!['system', 'light', 'dark'].includes(next)) return
+      const state = getState()
+      state.theme = next
+      save()
+      applyTheme()
+      render()
+      return
+    }
     case 'reset-progress': {
       if (window.confirm('确定清空全部学习进度、经验与成就？此操作不可撤销。')) {
         resetAll()
@@ -493,7 +532,31 @@ document.addEventListener('input', (event) => {
   }
 })
 
-document.addEventListener('change', (event) => {
+document.addEventListener('change', async (event) => {
+  if (event.target.id === 'import-file') {
+    const file = event.target.files && event.target.files[0]
+    event.target.value = ''
+    if (!file) return
+    const text = await file.text()
+    const result = parseBackup(text)
+    if (!result.ok) {
+      window.alert(`导入失败：${result.error}`)
+      return
+    }
+    const extra = result.dropped ? `（${result.dropped} 条无法识别，将被跳过）` : ''
+    const confirmed = window.confirm(
+      `将用备份覆盖当前进度：可恢复 ${result.valid} 条记录${extra}。继续？`,
+    )
+    if (!confirmed) return
+    applyBackup(result)
+    applyTheme()
+    resetUi()
+    render()
+    setBackupStatus(`已导入 ${result.valid} 条记录${extra}`)
+    window.alert('已导入备份。')
+    return
+  }
+
   const el = event.target.closest('[data-action="test-chapter-select"]')
   if (!el) return
   ui.testChapter = el.value
@@ -520,3 +583,12 @@ window.addEventListener('hashchange', () => {
 
 // 模块脚本是 defer 的，DOM 已解析完；直接渲染一次保证首屏
 render()
+
+// 离线：注册 Service Worker（file:// 打开时跳过）
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // 注册失败不影响在线使用
+    })
+  })
+}

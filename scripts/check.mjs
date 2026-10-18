@@ -18,6 +18,7 @@ import {
 import { CHART_NAMES } from '../js/charts.js'
 import { defaultState, overallStats, buildAchievementContext, ACHIEVEMENTS, setState } from '../js/store.js'
 import { buildReviewQueue } from '../js/review.js'
+import { buildBackup, parseBackup } from '../js/backup.js'
 import { homePage, knowledgeMapPage, chapterPage, knowledgePage, reviewPage, cheatsheetPage, sidebar } from '../js/views/pages.js'
 import { testCenter, testSession, mistakeEntries } from '../js/views/tests.js'
 
@@ -41,7 +42,7 @@ const questionIds = new Set()
 for (const ch of chapters) {
   check(!chapterIds.has(ch.id), `章 id 重复：${ch.id}`)
   chapterIds.add(ch.id)
-  check(ch.cards.length >= 3, `${ch.id} 卡片不足 3 张`)
+  check(ch.cards.length >= 6, `${ch.id} 知识点不足 6 张（当前 ${ch.cards.length}）`)
   if (ch.questions.length >= 20) {
     // 达标
   } else {
@@ -283,6 +284,48 @@ check(mistakes.length === 1 && mistakes[0].options.length === 4, '错题条目�
     },
   })
   check(cardHtml.includes('review-grade'), '卡片复习卡未渲染自评按钮')
+  setState(defaultState())
+}
+
+// 备份：导出 → 解析 → 还原 必须一致；坏数据必须被拒绝
+{
+  const state = defaultState()
+  state.progress['ch1-c1'] = {
+    attempts: 3,
+    correct: true,
+    lastCorrect: true,
+    box: 2,
+    dueTs: Date.now() + 86400000,
+    lastTs: Date.now(),
+  }
+  state.game.xp = 120
+  state.game.level = 2
+  setState(state)
+
+  const payload = buildBackup()
+  check(payload.app === 'money-banking' && payload.version === 1, '备份缺少 app/version 标记')
+
+  const parsed = parseBackup(JSON.stringify(payload))
+  check(parsed.ok, `备份解析失败：${parsed.error}`)
+  check(parsed.valid === 1, `备份记录数不对：${parsed.valid}`)
+  check(parsed.state.progress['ch1-c1'].box === 2, '还原后盒子层级不一致')
+  check(parsed.state.game.xp === 120, '还原后经验值不一致')
+
+  check(parseBackup('这不是 json').ok === false, '非法 JSON 应被拒绝')
+  check(parseBackup(JSON.stringify({ app: 'other' })).ok === false, '非本站文件应被拒绝')
+  check(
+    parseBackup(JSON.stringify({ app: 'money-banking', version: 99, state: { progress: {} } })).ok === false,
+    '高版本备份应被拒绝',
+  )
+  const partial = parseBackup(
+    JSON.stringify({
+      app: 'money-banking',
+      version: 1,
+      state: { progress: { good: { box: 1, dueTs: Date.now(), attempts: 1 }, bad: { box: 'x' } } },
+    }),
+  )
+  check(partial.ok && partial.valid === 1 && partial.dropped === 1, '坏记录应被剔除并计数')
+
   setState(defaultState())
 }
 

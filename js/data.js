@@ -6,12 +6,15 @@ import { part4 } from '../data/part4.js'
 import { part5 } from '../data/part5.js'
 import { part6 } from '../data/part6.js'
 import { extraQuestions } from '../data/extra/_index.js'
+import { extraCards } from '../data/cards-extra/_index.js'
 
 export const curriculum = [part1, part2, part3, part4, part5, part6]
 
 export const chapters = curriculum.flatMap((part) =>
   part.chapters.map((ch) => ({
     ...ch,
+    // 知识点 = 自带卡片 + data/cards-extra/chNN.js 扩充卡
+    cards: [...ch.cards, ...(extraCards[ch.id] || [])],
     // 题库 = 章节自带题 + data/extra/chNN.js 扩充题
     questions: [...ch.questions, ...(extraQuestions[ch.id] || [])],
     partId: part.id,

@@ -1681,12 +1681,11 @@
 }
 
 .km-knowledge circle {
-  transition: r 0.15s var(--ease), stroke-width 0.15s var(--ease);
+  transition: stroke-width 0.15s var(--ease);
 }
 
 .km-knowledge:hover circle {
-  r: 19;
-  stroke-width: 3.5;
+  stroke-width: 3.6;
 }
 
 .km-chapter:hover rect {
@@ -2650,6 +2649,113 @@
   font-style: normal;
   color: var(--color-accent);
   font-weight: 600;
+}
+
+/* ---------------- 设置与数据 ---------------- */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding-top: var(--space-6);
+}
+
+.settings__head {
+  max-width: 72ch;
+}
+
+.settings__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.settings__desc {
+  margin: var(--space-2) 0 0;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--color-text-2);
+}
+
+.settings__desc--small {
+  margin: 0;
+  font-size: 14px;
+}
+
+.settings__card {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.settings__card--danger {
+  border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+}
+
+.settings__h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.settings__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+.settings__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+
+.settings__stat strong {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings__stat span {
+  font-size: 12px;
+  color: var(--color-text-3);
+}
+
+.settings__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.settings__hint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--color-text-3);
+}
+
+.settings__foot {
+  padding: var(--space-2) 0 var(--space-6);
+}
+
+@media (max-width: 860px) {
+  .settings__stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .settings {
+    padding-top: var(--space-4);
+  }
 }
 
 /* ---------------- 移动端底部导航 ---------------- */

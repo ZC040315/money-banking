@@ -1,0 +1,26 @@
+{
+  "name": "货币金融学 · 知识地图",
+  "short_name": "货币金融学",
+  "description": "米什金《货币金融学》第十一版：知识点卡片、682 道分层题、间隔重复复习与章节测试。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7f4",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

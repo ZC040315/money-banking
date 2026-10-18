@@ -29,7 +29,8 @@ export function sidebar(ctx) {
 
   const tree = curriculum
     .map((part) => {
-      const rows = part.chapters
+      const list = chapters.filter((ch) => ch.partId === part.id)
+      const rows = list
         .map((ch) => {
           const mastery = chapterMastery(ch.cards)
           const status = chapterStatus(mastery)
@@ -49,7 +50,7 @@ export function sidebar(ctx) {
       return `<section class="map-tree">
         <div class="map-tree__head">
           <h3 class="map-tree__title">第 ${part.num} 篇 · ${esc(part.title)}</h3>
-          <span class="map-tree__count">${part.chapters.length} 章</span>
+          <span class="map-tree__count">${list.length} 章</span>
         </div>
         <div class="map-tree__list">${rows}</div>
       </section>`
@@ -82,7 +83,7 @@ export function homePage(ctx) {
   const { state, stats } = ctx
   const last = chapterById.get(state.lastChapter) ?? chapters[0]
   const partMastery = (part) => {
-    const list = part.chapters.filter((ch) => ch.cards.length)
+    const list = chapters.filter((ch) => ch.partId === part.id && ch.cards.length)
     if (!list.length) return 0
     return Math.round(list.reduce((sum, ch) => sum + chapterMastery(ch.cards), 0) / list.length)
   }
@@ -197,7 +198,8 @@ export function knowledgeMapPage(ctx) {
       text: `第 ${part.num} 篇 ${part.title}`,
       href: null,
     })
-    part.chapters.forEach((ch, ci) => {
+    const list = chapters.filter((ch) => ch.partId === part.id)
+    list.forEach((ch, ci) => {
       const y = Y0 + ci * CHAPTER_GAP
       const mastery = chapterMastery(ch.cards)
       nodes.push({
@@ -212,7 +214,8 @@ export function knowledgeMapPage(ctx) {
         href: `#/chapter/${ch.id}`,
       })
       const span = ch.cards.length
-      const spread = 46
+      const spread = span > 1 ? Math.min(46, 176 / (span - 1)) : 0
+      const radius = span > 5 ? 6.5 : 9
       ch.cards.forEach((card, ki) => {
         const cx = x + (ki - (span - 1) / 2) * spread
         const cy = y + 54
@@ -223,6 +226,7 @@ export function knowledgeMapPage(ctx) {
           id: card.id,
           x: cx,
           y: cy,
+          r: radius,
           title: card.title,
           status,
           href: `#/knowledge/${card.id}`,
@@ -259,7 +263,7 @@ export function knowledgeMapPage(ctx) {
       }
       return `<a class="km-link" href="${node.href}">
         <g class="km-knowledge">
-          <circle cx="${node.x}" cy="${node.y}" r="9" fill="var(--color-surface)"
+          <circle cx="${node.x}" cy="${node.y}" r="${node.r}" fill="var(--color-surface)"
             stroke="var(--color-${node.status === 'not-started' ? 'muted' : node.status})" stroke-width="2.2" />
           <title>${esc(node.title)}</title>
         </g>
