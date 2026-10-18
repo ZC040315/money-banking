@@ -16,7 +16,8 @@ import {
   chartQuestionPool,
 } from '../js/data.js'
 import { CHART_NAMES } from '../js/charts.js'
-import { defaultState, overallStats, buildAchievementContext, ACHIEVEMENTS } from '../js/store.js'
+import { defaultState, overallStats, buildAchievementContext, ACHIEVEMENTS, setState } from '../js/store.js'
+import { buildReviewQueue } from '../js/review.js'
 import { homePage, knowledgeMapPage, chapterPage, knowledgePage, reviewPage, cheatsheetPage, sidebar } from '../js/views/pages.js'
 import { testCenter, testSession, mistakeEntries } from '../js/views/tests.js'
 
@@ -235,6 +236,55 @@ const mistakeCtxState = defaultState()
 mistakeCtxState.progress['ch4-q1'] = { attempts: 2, correct: false, lastCorrect: false, box: 0, dueTs: 0 }
 const mistakes = mistakeEntries(mistakeCtxState)
 check(mistakes.length === 1 && mistakes[0].options.length === 4, '错题条目构造失败')
+
+// 复习队列：卡片与题目都要能进队列并渲染
+{
+  const reviewState = defaultState()
+  const now = Date.now()
+  reviewState.progress['ch4-e01'] = {
+    attempts: 1,
+    correct: false,
+    lastCorrect: false,
+    box: 0,
+    dueTs: now - 5000,
+    lastTs: now - 86400000,
+  }
+  reviewState.progress['ch4-c1'] = {
+    attempts: 2,
+    correct: true,
+    lastCorrect: true,
+    box: 2,
+    dueTs: now - 2000,
+    lastTs: now - 86400000,
+  }
+  setState(reviewState)
+  const queue = buildReviewQueue()
+  check(queue.length === 2, `复习队列应有 2 项，实际 ${queue.length}`)
+  check(queue.some((item) => item.kind === 'question'), '复习队列里没有题目')
+  check(queue.some((item) => item.kind === 'card'), '复习队列里没有卡片')
+  const questionItem = queue.find((item) => item.kind === 'question')
+  check(questionItem.options && questionItem.options.length === 4, '复习题目缺选项')
+  const questionHtml = reviewPage({
+    ...baseCtx,
+    state: reviewState,
+    ui: {
+      ...ui,
+      review: { queue, index: queue.indexOf(questionItem), revealed: false, chosen: null, correct: null },
+    },
+  })
+  check(questionHtml.includes('review-pick'), '题目复习卡未渲染选项按钮')
+  const cardItem = queue.find((item) => item.kind === 'card')
+  const cardHtml = reviewPage({
+    ...baseCtx,
+    state: reviewState,
+    ui: {
+      ...ui,
+      review: { queue, index: queue.indexOf(cardItem), revealed: true, chosen: null, correct: null },
+    },
+  })
+  check(cardHtml.includes('review-grade'), '卡片复习卡未渲染自评按钮')
+  setState(defaultState())
+}
 
 // ---------- 汇总 ----------
 if (problems.length) {

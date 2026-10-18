@@ -8,10 +8,10 @@ import {
   completeSession,
   recordTest,
   evaluateAchievements,
-  dueItems,
   overallStats,
   levelProgress,
 } from './store.js'
+import { buildReviewQueue } from './review.js'
 import { cards, curriculum, chapterById, cardById, questionById, chartQuestionPool } from './data.js'
 import { chapterQuiz, weeklyQuiz, testCenter, testSession, mistakeEntries } from './views/tests.js'
 import { navbar, mobileNav, toast, xpToast } from './views/shell.js'
@@ -80,6 +80,7 @@ function statsFor(state) {
   const base = overallStats(cards)
   return {
     ...base,
+    due: buildReviewQueue().length,
     levelPct: levelProgress(state.game.xp),
     levelXp: levelProgress(state.game.xp),
     level: state.game.level,
@@ -249,31 +250,55 @@ function handleSelfcheck(id, ok) {
 // 复习会话
 // ------------------------------------------------------------
 function startReview() {
-  const queue = dueItems(cards)
+  const queue = buildReviewQueue()
   if (!queue.length) {
     ui.review = null
     render()
     return
   }
-  ui.review = { queue, index: 0, revealed: false }
+  ui.review = { queue, index: 0, revealed: false, chosen: null, correct: null }
+  render()
+}
+
+function finishReviewRound() {
+  const gained = completeSession()
+  const unlocked = evaluateAchievements(curriculum)
+  ui.review = null
+  pushToast(unlocked, gained)
+  render()
+}
+
+function advanceReview() {
+  const session = ui.review
+  if (!session) return
+  if (session.index + 1 >= session.queue.length) {
+    finishReviewRound()
+    return
+  }
+  session.index += 1
+  session.revealed = false
+  session.chosen = null
+  session.correct = null
   render()
 }
 
 function gradeReview(ok) {
   const session = ui.review
   if (!session) return
-  const card = session.queue[session.index]
-  commitAnswer(card.id, ok, 'basic')
-  if (session.index + 1 >= session.queue.length) {
-    const gained = completeSession()
-    const unlocked = evaluateAchievements(curriculum)
-    ui.review = null
-    pushToast(unlocked, gained)
-    render()
-    return
-  }
-  session.index += 1
-  session.revealed = false
+  const item = session.queue[session.index]
+  commitAnswer(item.id, ok, item.kind === 'essay' ? 'challenge' : 'basic')
+  advanceReview()
+}
+
+function pickReview(index) {
+  const session = ui.review
+  if (!session) return
+  const item = session.queue[session.index]
+  if (session.chosen !== null && session.chosen !== undefined) return
+  const correct = index === item.answer
+  session.chosen = index
+  session.correct = correct
+  commitAnswer(item.id, correct, item.difficulty || 'advanced')
   render()
 }
 
@@ -396,6 +421,12 @@ document.addEventListener('click', (event) => {
       return
     case 'review-grade':
       gradeReview(el.dataset.ok === '1')
+      return
+    case 'review-pick':
+      pickReview(Number(el.dataset.index))
+      return
+    case 'review-next':
+      advanceReview()
       return
     case 'review-exit':
       ui.review = null

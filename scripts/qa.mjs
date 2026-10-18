@@ -224,8 +224,9 @@ const seed = await evaluate(`(() => {
   const now = Date.now();
   const state = {
     progress: {
-      'ch4-c1': { correct: true, attempts: 2, lastCorrect: true, box: 2, dueTs: now - 1000, lastTs: now - 86400000 },
-      'ch4-c2': { correct: false, attempts: 1, lastCorrect: false, box: 0, dueTs: now - 500, lastTs: now - 7200000 }
+      'ch4-e01': { correct: false, attempts: 1, lastCorrect: false, box: 0, dueTs: now - 3000, lastTs: now - 86400000 },
+      'ch4-c1': { correct: true, attempts: 2, lastCorrect: true, box: 2, dueTs: now - 2000, lastTs: now - 86400000 },
+      'ch4-c2': { correct: false, attempts: 1, lastCorrect: false, box: 0, dueTs: now - 1000, lastTs: now - 7200000 }
     },
     game: { xp: 40, level: 1, achievements: {}, answeredIds: ['ch4-c1'], reviewDays: [], sessions: 0 },
     history: [], theme: 'light', lastChapter: 'ch4'
@@ -240,8 +241,14 @@ await sleep(900)
 await shot('review-home')
 await evaluate('document.querySelector("[data-action=start-review]").click()')
 await sleep(500)
+await shot('review-question', { full: false })
+await evaluate('document.querySelector("[data-action=review-pick]")?.click()')
+await sleep(400)
+await shot('review-question-answered', { full: false })
+await evaluate('document.querySelector("[data-action=review-next]")?.click()')
+await sleep(400)
 await shot('review-card', { full: false })
-await evaluate('document.querySelector("[data-action=review-reveal]").click()')
+await evaluate('document.querySelector("[data-action=review-reveal]")?.click()')
 await sleep(300)
 await shot('review-revealed', { full: false })
 

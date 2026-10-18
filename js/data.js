@@ -128,6 +128,13 @@ export function allTestables() {
   return chapters.flatMap((ch) => chapterPool(ch.id))
 }
 
+let testableMap = null
+// 按 id 取「可判分」形态（卡片速测与选择题/判断题/报表题）
+export function testableById(id) {
+  if (!testableMap) testableMap = new Map(allTestables().map((item) => [item.id, item]))
+  return testableMap.get(id)
+}
+
 export function chapterQuiz(chapterId, count = 6) {
   const pool = chapterPool(chapterId)
   return shuffleSlice(pool, count)

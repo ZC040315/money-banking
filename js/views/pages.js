@@ -4,7 +4,6 @@ import { chart } from '../charts.js'
 import {
   curriculum,
   chapters,
-  cards,
   chapterById,
   cardById,
   relatedCards,
@@ -13,13 +12,12 @@ import {
 import {
   chapterMastery,
   chapterStatus,
-  dueItems,
   masteryOf,
   STATUS_LABELS,
-  weakCards,
   longestStreak,
 } from '../store.js'
 import { achievementsPanel, masteryBar, statusDot } from './shell.js'
+import { buildReviewQueue, kindLabel } from '../review.js'
 import { CHEATSHEET } from '../cheatsheet.js'
 
 // ------------------------------------------------------------
@@ -61,7 +59,7 @@ export function sidebar(ctx) {
   return `<aside class="map-panel">
     <div class="review-banner${stats.due === 0 ? ' review-banner--empty' : ''}">
       <span class="review-banner__text">${
-        stats.due > 0 ? `<strong>${stats.due}</strong> 张卡到期` : '今日没有到期的卡'
+        stats.due > 0 ? `<strong>${stats.due}</strong> 项到期` : '今日没有到期的内容'
       }</span>
       ${
         stats.due > 0
@@ -658,39 +656,127 @@ export function knowledgePage(ctx) {
 export function reviewPage(ctx) {
   const { state, ui, stats } = ctx
   const session = ui.review
+
   if (session && session.queue.length) {
-    const card = session.queue[session.index]
-    return `<div class="review-home">
-      <div class="review-home__head">
-        <div>
-          <h1 class="review-home__title">复习 · 第 ${session.index + 1}/${session.queue.length} 张</h1>
-          <p class="review-home__desc">${esc(card.chapterTitle)} · 盒子第 ${(card.box ?? 0) + 1} 层</p>
-        </div>
-        <button type="button" class="btn btn--ghost btn--sm" data-action="review-exit">退出</button>
+    const item = session.queue[session.index]
+    const letter = (i) => 'ABCD'[i] ?? String(i + 1)
+    const head = `<div class="review-home__head">
+      <div>
+        <h1 class="review-home__title">复习 · 第 ${session.index + 1}/${session.queue.length} 项</h1>
+        <p class="review-home__desc">第 ${item.chapterNum} 章 ${esc(item.chapterTitle)} · ${kindLabel(
+          item.kind,
+        )} · 盒子第 ${item.box + 1} 层</p>
       </div>
+      <button type="button" class="btn btn--ghost btn--sm" data-action="review-exit">退出</button>
+    </div>`
+
+    if (item.kind === 'card') {
+      return `<div class="review-home">${head}
+        <article class="review-card">
+          <div class="review-card__meta">${statusDot('review')}<span>知识点到期</span></div>
+          <h2 class="review-card__title">${esc(item.title)}</h2>
+          <p class="review-card__recall">${esc(item.recall)}</p>
+          ${
+            session.revealed
+              ? `<div class="review-card__ref">${esc(item.definition)}<br /><br />${esc(item.example)}</div>
+                 <div class="review-card__actions" style="display:flex;gap:12px;flex-wrap:wrap">
+                   <button type="button" class="btn btn--primary" data-action="review-grade" data-ok="1">记住了</button>
+                   <button type="button" class="btn btn--ghost" data-action="review-grade" data-ok="0">没记住</button>
+                 </div>`
+              : `<button type="button" class="btn btn--primary" data-action="review-reveal">想好了，翻面看答案</button>`
+          }
+        </article>
+      </div>`
+    }
+
+    if (item.kind === 'question') {
+      const chosen = session.chosen
+      const answered = chosen !== null && chosen !== undefined
+      const correct = session.correct === true
+      return `<div class="review-home">${head}
+        <article class="review-card">
+          <div class="review-card__meta">${statusDot('review')}<span>题目重做 · 上次到期</span></div>
+          <p class="review-card__prompt">${esc(item.prompt)}</p>
+          ${item.chart ? chart(item.chart, item.chartCaption) : ''}
+          ${
+            item.table
+              ? `<div class="report-table">
+                  <p class="report-table__title">${esc(item.table.title)}</p>
+                  <div class="report-table__wrap"><table>
+                    <thead><tr>${item.table.columns.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+                    <tbody>${item.table.rows
+                      .map((row) => `<tr>${row.map((cell) => `<td>${esc(cell)}</td>`).join('')}</tr>`)
+                      .join('')}</tbody>
+                  </table></div>
+                </div>`
+              : ''
+          }
+          <div class="test-session__options">
+            ${(item.options || [])
+              .map((option, index) => {
+                const chosenThis = chosen === index
+                const isAnswer = index === item.answer
+                let cls = 'test-session__option'
+                if (chosenThis) cls += isAnswer ? ' test-session__option--correct' : ' test-session__option--wrong'
+                else if (answered && isAnswer) cls += ' test-session__option--answer'
+                return `<button type="button" class="${cls}" ${answered ? 'disabled' : ''}
+                  data-action="review-pick" data-index="${index}">
+                  <span class="test-session__option-label">${letter(index)}</span>
+                  <span>${esc(option)}</span>
+                </button>`
+              })
+              .join('')}
+          </div>
+          ${
+            answered
+              ? `<p class="test-session__feedback ${
+                  correct ? 'test-session__feedback--correct' : 'test-session__feedback--wrong'
+                }">${correct ? '答对了。' : `答错了，正确答案是 ${letter(item.answer)}。`}${esc(
+                  item.explanation || '',
+                )}</p>
+                 <div class="review-card__actions" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+                   <button type="button" class="btn btn--primary" data-action="review-next">
+                     ${session.index + 1 >= session.queue.length ? '完成本轮' : '下一题'}
+                   </button>
+                 </div>`
+              : ''
+          }
+        </article>
+      </div>`
+    }
+
+    return `<div class="review-home">${head}
       <article class="review-card">
-        <div class="review-card__meta">${statusDot('review')}<span>到期复习</span></div>
-        <h2 class="review-card__title">${esc(card.title)}</h2>
-        <p class="review-card__recall">${esc(card.recall)}</p>
+        <div class="review-card__meta">${statusDot('review')}<span>问答题到期</span></div>
+        <p class="review-card__prompt">${esc(item.prompt)}</p>
+        ${item.hint ? `<p class="review-card__recall">提示：${esc(item.hint)}</p>` : ''}
         ${
           session.revealed
-            ? `<div class="review-card__ref">${esc(card.definition)}<br /><br />${esc(card.example)}</div>
+            ? `<div class="review-card__ref">${esc(item.reference || item.explanation || '')}</div>
                <div class="review-card__actions" style="display:flex;gap:12px;flex-wrap:wrap">
-                 <button type="button" class="btn btn--primary" data-action="review-grade" data-ok="1">记住了</button>
-                 <button type="button" class="btn btn--ghost" data-action="review-grade" data-ok="0">没记住</button>
+                 <button type="button" class="btn btn--primary" data-action="review-grade" data-ok="1">答对了</button>
+                 <button type="button" class="btn btn--ghost" data-action="review-grade" data-ok="0">没答对</button>
                </div>`
-            : `<button type="button" class="btn btn--primary" data-action="review-reveal">想好了，翻面看答案</button>`
+            : `<button type="button" class="btn btn--primary" data-action="review-reveal">先想一想，看参考答案</button>`
         }
       </article>
     </div>`
   }
 
-  const due = dueItems(cards)
+  const queue = buildReviewQueue()
   const weak = [...chapters]
     .filter((ch) => ch.cards.length)
     .map((ch) => ({ ...ch, mastery: chapterMastery(ch.cards) }))
     .sort((a, b) => a.mastery - b.mastery)
     .slice(0, 6)
+
+  const counts = queue.reduce(
+    (acc, item) => {
+      acc[item.kind] = (acc[item.kind] || 0) + 1
+      return acc
+    },
+    {},
+  )
 
   return `<div class="review-home">
     <div class="review-home__head">
@@ -698,38 +784,46 @@ export function reviewPage(ctx) {
         <h1 class="review-home__title">复习</h1>
         <p class="review-home__desc">
           利特纳盒子共 5 层：答对升一层，间隔 1 → 2 → 4 → 8 → 16 天；答错退回第 1 层。
-          今天到期 <strong>${due.length}</strong> 张，已完成 ${state.game.sessions} 次复习会话，最长连续 ${longestStreak(
-            state.game.reviewDays,
-          )} 天。
+          卡片与题目共用同一套间隔，所以做错的题也会像卡片一样按时回到这里。
+          今天到期 <strong>${queue.length}</strong> 项${
+            queue.length
+              ? `（知识点 ${counts.card || 0} · 题目 ${counts.question || 0} · 问答 ${counts.essay || 0}）`
+              : ''
+          }，已完成 ${state.game.sessions} 次复习会话，最长连续 ${longestStreak(state.game.reviewDays)} 天。
         </p>
       </div>
-      <button type="button" class="btn btn--primary" data-action="start-review" ${due.length ? '' : 'disabled style="opacity:.5"'}>
-        ${due.length ? `开始复习（${due.length}）` : '暂无到期'}
+      <button type="button" class="btn btn--primary" data-action="start-review" ${
+        queue.length ? '' : 'disabled style="opacity:.5"'
+      }>
+        ${queue.length ? `开始复习（${queue.length}）` : '暂无到期'}
       </button>
     </div>
 
     ${
-      due.length
+      queue.length
         ? `<section>
-            <h2 class="review-home__weak-title">今日到期（按到期时间排序）</h2>
+            <h2 class="review-home__weak-title">今日到期（按到期时间排序，最多显示 12 项）</h2>
             <div class="weak-table">
-              <div class="weak-table__head"><span>知识点</span><span>章节</span><span>盒子</span><span></span></div>
+              <div class="weak-table__head"><span>内容</span><span>章节</span><span>类型</span><span>盒子</span></div>
               <div class="weak-table__list">
-                ${due
+                ${queue
                   .slice(0, 12)
-                  .map(
-                    (card) => `<div class="weak-table__row">
-                      <span class="weak-table__title">${esc(card.title)}</span>
-                      <span class="weak-table__chapter">第 ${card.chapterNum} 章 ${esc(card.chapterTitle)}</span>
-                      <span class="weak-table__count">第 ${(card.box ?? 0) + 1} 层</span>
-                      <a class="weak-table__go" href="#/knowledge/${card.id}">查看</a>
-                    </div>`,
-                  )
+                  .map((item) => {
+                    const label = item.kind === 'card' ? item.title : item.prompt
+                    const href =
+                      item.kind === 'card' ? `#/knowledge/${item.id}` : `#/chapter/${item.chapterId}`
+                    return `<div class="weak-table__row">
+                      <span class="weak-table__title"><a href="${href}">${esc(label)}</a></span>
+                      <span class="weak-table__chapter">第 ${item.chapterNum} 章 ${esc(item.chapterTitle)}</span>
+                      <span class="weak-table__count">${kindLabel(item.kind)}</span>
+                      <span class="weak-table__chapter">第 ${item.box + 1} 层</span>
+                    </div>`
+                  })
                   .join('')}
               </div>
             </div>
           </section>`
-        : `<p class="test-empty">今天没有到期的卡。去章节页翻几张新卡，或者做一套综合卷。</p>`
+        : `<p class="test-empty">今天没有到期的卡片或题目。去章节页翻几张新卡，或者做一套综合卷。</p>`
     }
 
     <section>

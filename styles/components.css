@@ -2001,6 +2001,13 @@
   line-height: 1.4;
 }
 
+.review-card__prompt {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
 .review-card__recall {
   margin: 0;
   font-size: 14.5px;
@@ -2303,6 +2310,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.weak-table__title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.weak-table__title a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
 }
 
 .weak-table__chapter {
