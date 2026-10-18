@@ -4,7 +4,8 @@
 模仿 `economics-map` 的信息架构与交互方式，但内容、配色与视觉主题重新做过：**零依赖、零构建**的静态站，
 双击 `启动.cmd` 就能在浏览器里用，推到 GitHub Pages 也不用编译。
 
-线上可以只用手机打开：所有进度存在浏览器本地，不联网、不需要账号。
+**线上地址：<https://zc040315.github.io/money-banking/>** —— 手机上直接用这个，进度存在该浏览器本地
+（已上线 2026-10-18，仓库 `ZC040315/money-banking`，Pages 指向 `main` 分支根目录）。
 
 ---
 
@@ -175,18 +176,30 @@ node scripts/qa.mjs      # 需要 Chrome：桌面/移动视口截图、点击流
 
 ---
 
-## 8. 部署到 GitHub Pages
+## 8. 部署（已完成，这里是后续更新步骤）
+
+仓库已建好并已上线：<https://github.com/ZC040315/money-banking> → Pages 指向 `main` 根目录。
+
+以后改完内容，只需：
 
 ```bash
 cd money-banking
-git init && git add -A && git commit -m "货币金融学知识地图"
-# 在 GitHub 上建一个公开仓库（例如 money-banking），然后：
-git remote add origin https://<你的用户名>@github.com/<你的用户名>/money-banking.git
+git add -A
+git commit -m "更新第 4 章题库"
+git push
+```
+
+30 秒～2 分钟后 <https://zc040315.github.io/money-banking/> 自动更新。
+
+若要从零重来（换仓库名时）：
+
+```bash
+git init -b main && git add -A && git commit -m "init"
+git remote add origin https://<用户名>@github.com/<用户名>/<仓库名>.git
 git push -u origin main
 ```
 
-仓库 **Settings → Pages** → Source 选 `Deploy from a branch` → 分支 `main`、目录 `/ (root)` → 保存。
-一两分钟后访问 `https://<用户名>.github.io/money-banking/`。
+然后在 GitHub 仓库 **Settings → Pages** 把 Source 设为 `Deploy from a branch` / `main` / `/ (root)`。
 
 因为用的是 hash 路由 + 相对路径，**放在子路径下也能正常工作**，不需要改 `base`。
 

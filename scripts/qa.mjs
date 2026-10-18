@@ -6,8 +6,8 @@ import { join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 
 const OUT = process.argv[2] || join(process.cwd(), '..', '_research', 'shots', 'mb2')
+const BASE = process.argv[3] || 'http://127.0.0.1:8123/'
 const PORT = 9333
-const BASE = 'http://127.0.0.1:8123/'
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
 const PROFILE = join(OUT, 'profile')
 
