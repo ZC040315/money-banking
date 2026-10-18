@@ -162,6 +162,15 @@ export const part4 = {
 新增一章：在对应 `partN.js` 的 `chapters` 里加一个对象 → 跑 `node scripts/check.mjs` → 完事。
 首页、地图、侧栏、搜索、测试中心都是遍历数据自动生成的，不需要额外登记。
 
+**如果手上有老师课件**：放进仓库外的 `../讲义/`，然后
+
+```bash
+python scripts/extract_office.py ../讲义 -o ../讲义/_extracted
+```
+
+会把 pptx/docx 按页抽成纯文本（标题、正文、表格都保留），方便逐章对照着改卡片与「考试重点」。
+PDF 直接发页面截图即可，图片我能读。
+
 ---
 
 ## 7. 自检
