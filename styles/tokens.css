@@ -1,0 +1,119 @@
+/* ============================================================
+   Design Tokens · 货币金融学知识地图
+   风格：Linear + Notion + Khan Academy 的现代极简
+   主色：沉稳墨青（金融） · 现代无衬线 · 支持 Dark Mode
+   ============================================================ */
+
+:root {
+  /* ---------- 字体 ---------- */
+  --font-display: "Inter", "Manrope", "PingFang SC", "Microsoft YaHei",
+    "Noto Sans SC", system-ui, -apple-system, sans-serif;
+  --font-body: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC",
+    system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", Consolas,
+    "Courier New", monospace;
+
+  /* ---------- 尺寸 ---------- */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --header-h: 60px;
+  --content-max: 1200px;
+  --z-nav: 30;
+  --z-overlay: 40;
+  --z-toast: 50;
+
+  --duration-fast: 0.15s;
+  --duration-base: 0.2s;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- 浅色（默认） ---------- */
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  --color-bg: #f7f7f4;
+  --color-surface: #ffffff;
+  --color-surface-2: #f0f0ec;
+  --color-text: #191a1a;
+  --color-text-2: #565a5e;
+  --color-text-3: #878b8f;
+  --color-border: #e2e2dc;
+  --color-border-strong: #cdcdc6;
+
+  --color-accent: #0f766e;
+  --color-accent-strong: #115e59;
+  --color-accent-soft: rgba(15, 118, 110, 0.08);
+  --color-accent-border: rgba(15, 118, 110, 0.38);
+  --color-on-accent: #ffffff;
+
+  --color-learning: #2563eb;
+  --color-learning-soft: rgba(37, 99, 235, 0.1);
+  --color-learning-border: rgba(37, 99, 235, 0.4);
+  --color-mastered: #15803d;
+  --color-mastered-soft: rgba(21, 128, 61, 0.1);
+  --color-mastered-border: rgba(21, 128, 61, 0.4);
+  --color-review: #b45309;
+  --color-review-soft: rgba(180, 83, 9, 0.1);
+  --color-review-border: rgba(180, 83, 9, 0.4);
+  --color-danger: #dc2626;
+  --color-danger-soft: rgba(220, 38, 38, 0.1);
+  --color-muted: #a1a1aa;
+  --color-track: #e8e8e2;
+  --color-selected: #e7f3f1;
+  --color-video-bg: #18181b;
+
+  --shadow-soft: 0 1px 2px rgba(25, 26, 26, 0.05);
+  --shadow-md: 0 4px 16px rgba(25, 26, 26, 0.08);
+  --shadow-lg: 0 12px 32px rgba(25, 26, 26, 0.12);
+}
+
+/* ---------- 暗色 ---------- */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-bg: #0f1112;
+  --color-surface: #16181a;
+  --color-surface-2: #1d2022;
+  --color-text: #ececea;
+  --color-text-2: #a4a8ab;
+  --color-text-3: #71767a;
+  --color-border: #292c2f;
+  --color-border-strong: #3a3e42;
+
+  --color-accent: #2dd4bf;
+  --color-accent-strong: #99f6e4;
+  --color-accent-soft: rgba(45, 212, 191, 0.12);
+  --color-accent-border: rgba(45, 212, 191, 0.42);
+  --color-on-accent: #0f1112;
+
+  --color-learning: #60a5fa;
+  --color-learning-soft: rgba(96, 165, 250, 0.14);
+  --color-learning-border: rgba(96, 165, 250, 0.45);
+  --color-mastered: #34d399;
+  --color-mastered-soft: rgba(52, 211, 153, 0.14);
+  --color-mastered-border: rgba(52, 211, 153, 0.45);
+  --color-review: #fbbf24;
+  --color-review-soft: rgba(251, 191, 36, 0.14);
+  --color-review-border: rgba(251, 191, 36, 0.45);
+  --color-danger: #f87171;
+  --color-danger-soft: rgba(248, 113, 113, 0.14);
+  --color-muted: #71767a;
+  --color-track: #292c2f;
+  --color-selected: rgba(45, 212, 191, 0.14);
+  --color-video-bg: #0b0b0d;
+
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
