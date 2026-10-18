@@ -118,7 +118,19 @@ async function setViewport(width, height, mobile) {
 
 async function goto(url) {
   await send('Page.navigate', { url })
-  await sleep(900)
+  // 线上首次加载要拉约 700KB 模块，固定 sleep 会误判空页面；改成轮询挂载
+  let mounted = false
+  for (let i = 0; i < 40; i += 1) {
+    await sleep(200)
+    try {
+      mounted = await evaluate('!!(document.querySelector("#app") && document.querySelector("#app").children.length)')
+      if (mounted) break
+    } catch {
+      /* 导航中，继续等 */
+    }
+  }
+  if (!mounted) pageErrors.push(`空页面（未挂载）：${url}`)
+  await sleep(150)
 }
 
 async function shot(name, { full = true, maxHeight = 3000 } = {}) {
@@ -170,11 +182,11 @@ await shot('test')
 await goto(`${BASE}#/chapter/ch4`)
 await shot('chapter4')
 
-await evaluate('document.querySelector("[data-action=flip]").click()')
+await evaluate('document.querySelector("[data-action=flip]")?.click()')
 await sleep(300)
 await shot('chapter4-flipped', { full: false })
 
-await evaluate('document.querySelector("[data-action=answer]").click()')
+await evaluate('document.querySelector("[data-action=answer]")?.click()')
 await sleep(300)
 await shot('chapter4-answered', { full: false })
 
@@ -186,7 +198,7 @@ await shot('cheatsheet')
 
 // 测试会话
 await goto(`${BASE}#/test`)
-await evaluate('document.querySelector("[data-action=start-chapter-test]").click()')
+await evaluate('document.querySelector("[data-action=start-chapter-test]")?.click()')
 await sleep(600)
 await shot('session-q1', { full: false })
 
@@ -239,7 +251,7 @@ await sleep(300)
 await evaluate('location.reload()')
 await sleep(900)
 await shot('review-home')
-await evaluate('document.querySelector("[data-action=start-review]").click()')
+await evaluate('document.querySelector("[data-action=start-review]")?.click()')
 await sleep(500)
 await shot('review-question', { full: false })
 await evaluate('document.querySelector("[data-action=review-pick]")?.click()')
@@ -269,7 +281,7 @@ const hasMistake = await evaluate(
   '!!document.querySelector("[data-action=start-mistake-test]:not([disabled])")',
 )
 if (hasMistake) {
-  await evaluate('document.querySelector("[data-action=start-mistake-test]").click()')
+  await evaluate('document.querySelector("[data-action=start-mistake-test]")?.click()')
   await sleep(600)
   await shot('mistake-session', { full: false })
   await evaluate('document.querySelector("[data-action=session-pick]")?.click()')
@@ -283,7 +295,7 @@ const hasChartQuiz = await evaluate(
   '!!document.querySelector("[data-action=start-chart-test]:not([disabled])")',
 )
 if (hasChartQuiz) {
-  await evaluate('document.querySelector("[data-action=start-chart-test]").click()')
+  await evaluate('document.querySelector("[data-action=start-chart-test]")?.click()')
   await sleep(600)
   await shot('chart-session', { full: false })
   await evaluate('document.querySelector("[data-action=session-pick]")?.click()')
@@ -319,7 +331,7 @@ await goto(`${BASE}#/knowledge/ch5-c1`)
 await shot('m-knowledge')
 
 await goto(`${BASE}#/test`)
-await evaluate('document.querySelector("[data-action=start-chapter-test]").click()')
+await evaluate('document.querySelector("[data-action=start-chapter-test]")?.click()')
 await sleep(600)
 await shot('m-session', { full: false })
 
