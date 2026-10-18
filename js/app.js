@@ -12,7 +12,7 @@ import {
   overallStats,
   levelProgress,
 } from './store.js'
-import { cards, curriculum, chapterById, cardById, questionById } from './data.js'
+import { cards, curriculum, chapterById, cardById, questionById, chartQuestionPool } from './data.js'
 import { chapterQuiz, weeklyQuiz, testCenter, testSession, mistakeEntries } from './views/tests.js'
 import { navbar, mobileNav, toast, xpToast } from './views/shell.js'
 import {
@@ -293,6 +293,8 @@ function restartSession() {
     startSession({ ...session, route: `#/test/chapter/${session.chapterId}` }, chapterQuiz(session.chapterId, 6), session.title)
   } else if (session.kind === 'weekly') {
     startSession({ ...session, route: '#/test/weekly' }, weeklyQuiz(20), session.title)
+  } else if (session.kind === 'chart') {
+    startSession({ ...session, route: '#/test/chapter/charts' }, chartQuestionPool(), session.title)
   } else if (session.kind === 'mistake') {
     const items = mistakeEntries(getState()).filter((item) => item.options.length)
     if (!items.length) {
@@ -401,6 +403,9 @@ document.addEventListener('click', (event) => {
     }
     case 'start-weekly-test':
       startSession({ kind: 'weekly', route: '#/test/weekly' }, weeklyQuiz(20), '综合卷 · 20 题')
+      return
+    case 'start-chart-test':
+      startSession({ kind: 'chart', route: '#/test/chapter/charts' }, chartQuestionPool(), '图形题专项')
       return
     case 'start-mistake-test': {
       const items = mistakeEntries(getState()).filter((item) => item.options.length)

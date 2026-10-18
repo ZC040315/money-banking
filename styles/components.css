@@ -1484,6 +1484,13 @@
   stroke-dasharray: 7 4;
 }
 
+.chart-curve-blue {
+  fill: none;
+  stroke: var(--color-learning);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
 .chart-curve-3 {
   fill: none;
   stroke: var(--color-review);
@@ -1540,6 +1547,13 @@
 
 .chart-equil {
   fill: var(--color-accent);
+}
+
+.chart-old-eq {
+  fill: none;
+  stroke: var(--color-text-3);
+  stroke-width: 1.4;
+  stroke-dasharray: 2 2;
 }
 
 .km-edge {

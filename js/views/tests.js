@@ -9,6 +9,7 @@ import {
   weeklyQuiz,
   allTestables,
   cardById,
+  chartQuestionPool,
 } from '../data.js'
 import { masteryOf, dueItems } from '../store.js'
 
@@ -76,6 +77,7 @@ export function testCenter(ctx) {
   const weak = weakEntries(state)
   const history = state.history.slice(0, 6)
   const selectedChapter = chapterById.get(ui.testChapter) ?? chapters[0]
+  const chartItems = chartQuestionPool()
 
   return `<div class="test-center">
     <section class="test-center__hero">
@@ -110,6 +112,17 @@ export function testCenter(ctx) {
         <h2 class="test-card__title">综合卷</h2>
         <p class="test-card__desc">20 题，六篇混合，覆盖利率、机构、政策与理论，模拟考试节奏。</p>
         <button type="button" class="btn btn--primary" data-action="start-weekly-test">开始综合卷</button>
+      </section>
+
+      <section class="test-card">
+        <h2 class="test-card__title">图形题专项</h2>
+        <p class="test-card__desc">${
+          chartItems.length
+            ? `${chartItems.length} 道读图题：曲线移动 → 新旧均衡，覆盖债券/货币/准备金/IS-MP/AD-AS/外汇市场。`
+            : '暂无图形题。'
+        }</p>
+        <button type="button" class="btn ${chartItems.length ? 'btn--primary' : 'btn--ghost'}"
+          data-action="start-chart-test" ${chartItems.length ? '' : 'disabled'}>开始图形题</button>
       </section>
 
       <section class="test-card">

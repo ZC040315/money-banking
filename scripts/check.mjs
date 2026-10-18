@@ -13,6 +13,7 @@ import {
   chapterById,
   search,
   totals,
+  chartQuestionPool,
 } from '../js/data.js'
 import { CHART_NAMES } from '../js/charts.js'
 import { defaultState, overallStats, buildAchievementContext, ACHIEVEMENTS } from '../js/store.js'
@@ -103,6 +104,20 @@ for (const ch of chapters) {
 const testables = allTestables()
 check(testables.length >= 150, `可判分题总量偏少：${testables.length}`)
 check(new Set(testables.map((t) => t.id)).size === testables.length, '可判分题 id 有重复')
+
+// ---------- 图形题 ----------
+const chartQuestions = questions.filter((q) => q.chart)
+check(chartQuestions.length >= 8, `图形题过少：${chartQuestions.length}`)
+const usedCharts = new Set(
+  [...cards.map((c) => c.chart), ...questions.map((q) => q.chart)].filter(Boolean),
+)
+for (const name of CHART_NAMES) {
+  check(usedCharts.has(name), `图表已定义但没有任何内容引用：${name}`)
+}
+for (const item of chartQuestionPool()) {
+  check(item.kind === 'question', `图形题专项混入了卡片速测：${item.id}`)
+  check(Boolean(item.chart), `图形题缺 chart：${item.id}`)
+}
 
 // ---------- 成就条件可执行 ----------
 const baseState = defaultState()

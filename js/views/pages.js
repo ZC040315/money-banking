@@ -462,8 +462,15 @@ export function chapterPage(ctx) {
     { key: 'basic', label: '基础' },
     { key: 'advanced', label: '进阶' },
     { key: 'challenge', label: '疑难' },
+    ...(chapter.questions.some((q) => q.chart) ? [{ key: 'chart', label: '图形' }] : []),
   ]
-  const visible = chapter.questions.filter((q) => ui.filter === 'all' || q.difficulty === ui.filter)
+  const visible = chapter.questions.filter((q) =>
+    ui.filter === 'all'
+      ? true
+      : ui.filter === 'chart'
+        ? Boolean(q.chart)
+        : q.difficulty === ui.filter,
+  )
 
   return `<article class="chapter-detail">
     <header>

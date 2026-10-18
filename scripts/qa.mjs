@@ -270,6 +270,28 @@ if (hasMistake) {
   await shot('mistake-answered', { full: false })
 }
 
+// 图形题专项
+await goto(`${BASE}#/test`)
+const hasChartQuiz = await evaluate(
+  '!!document.querySelector("[data-action=start-chart-test]:not([disabled])")',
+)
+if (hasChartQuiz) {
+  await evaluate('document.querySelector("[data-action=start-chart-test]").click()')
+  await sleep(600)
+  await shot('chart-session', { full: false })
+  await evaluate('document.querySelector("[data-action=session-pick]")?.click()')
+  await sleep(400)
+  await shot('chart-answered', { full: false })
+}
+
+// 章节页的「图形」筛选
+await goto(`${BASE}#/chapter/ch5`)
+await evaluate('document.querySelector("[data-filter=chart]")?.click()')
+await sleep(300)
+await evaluate('document.querySelector(".practice")?.scrollIntoView({ block: "start" })')
+await sleep(300)
+await shot('chapter-filter-chart', { full: false })
+
 // ---------------- 移动端 ----------------
 console.log('移动端 390×844')
 await setViewport(390, 844, true)

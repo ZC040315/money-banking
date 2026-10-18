@@ -153,22 +153,24 @@ function yieldCurve() {
 // 4. 准备金市场：联邦基金利率由供求决定
 // ------------------------------------------------------------
 function reserveMarket() {
-  const eqY = Y(0.4945)
+  const RD = { p1: { x: 0.1, y: 0.82 }, p2: { x: 0.9, y: 0.2 } }
+  const RS = { p1: { x: 0.52, y: 0.1 }, p2: { x: 0.52, y: 0.92 } }
+  const RS2 = { p1: { x: 0.74, y: 0.1 }, p2: { x: 0.74, y: 0.92 } }
+  const before = intersect(RD, RS)
+  const after = intersect(RD, RS2)
   return figure(
     [
-      frame({
-        yLabel: '联邦基金利率 i',
-        xLabel: '准备金数量 R',
-        yTicks: [{ at: 0.4945, text: 'i*' }],
-      }),
-      path(`M${X(0.1).toFixed(1)},${Y(0.82).toFixed(1)} L${X(0.9).toFixed(1)},${Y(0.2).toFixed(1)}`, 'curve'),
-      line(X(0.52), Y(0.12), X(0.52), Y(0.9), 'vertical'),
-      path(`M${X(0.72).toFixed(1)},${Y(0.12).toFixed(1)} L${X(0.72).toFixed(1)},${Y(0.9).toFixed(1)}`, 'shift'),
-      hguide(eqY, 0, 0.52),
-      dot(X(0.52), eqY),
+      frame({ yLabel: '联邦基金利率 i', xLabel: '准备金数量 R' }),
+      seg(RD.p1, RD.p2, 'curve'),
+      line(X(0.52), Y(0.1), X(0.52), Y(0.92), 'vertical'),
+      line(X(0.74), Y(0.1), X(0.74), Y(0.92), 'shift'),
+      guides(before),
+      guides(after),
+      oldPoint(before),
+      dot(X(after.x), Y(after.y)),
       label(X(0.12), Y(0.9), 'RD（需求）', 'curve-label', 'start'),
-      label(X(0.5), Y(0.95), 'RS', 'curve-label', 'end'),
-      label(X(0.75), Y(0.95), "RS′", 'shift-label', 'start'),
+      label(X(0.5), Y(0.96), 'RS', 'curve-label', 'end'),
+      label(X(0.76), Y(0.96), "RS′", 'shift-label', 'start'),
     ].join(''),
   )
 }
@@ -208,7 +210,7 @@ function adAs() {
         xTicks: [{ at: 0.6, text: 'Y*' }],
       }),
       path(`M${X(0.12).toFixed(1)},${Y(0.84).toFixed(1)} L${X(0.94).toFixed(1)},${Y(0.2).toFixed(1)}`, 'curve'),
-      path(`M${X(0.14).toFixed(1)},${Y(0.18).toFixed(1)} L${X(0.86).toFixed(1)},${Y(0.86).toFixed(1)}`, 'curve-2'),
+      path(`M${X(0.14).toFixed(1)},${Y(0.18).toFixed(1)} L${X(0.86).toFixed(1)},${Y(0.86).toFixed(1)}`, 'curve-blue'),
       line(X(0.6), Y(0.12), X(0.6), Y(0.92), 'vertical'),
       label(X(0.9), Y(0.26), 'AD', 'curve-label', 'start'),
       label(X(0.84), Y(0.9), '短期 AS', 'curve-label', 'start'),
@@ -241,14 +243,195 @@ function fxMarket() {
   )
 }
 
+// ------------------------------------------------------------
+// 通用工具：线段、交点、新旧均衡
+// ------------------------------------------------------------
+function seg(a, b, cls = 'curve') {
+  return path(
+    `M${X(a.x).toFixed(1)},${Y(a.y).toFixed(1)} L${X(b.x).toFixed(1)},${Y(b.y).toFixed(1)}`,
+    cls,
+  )
+}
+
+function intersect(a, b) {
+  const { x: x1, y: y1 } = a.p1
+  const { x: x2, y: y2 } = a.p2
+  const { x: x3, y: y3 } = b.p1
+  const { x: x4, y: y4 } = b.p2
+  const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+  if (!den) return null
+  const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den
+  return { x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1) }
+}
+
+function oldPoint(pt) {
+  if (!pt) return ''
+  return `<circle cx="${X(pt.x).toFixed(1)}" cy="${Y(pt.y).toFixed(1)}" r="4" class="chart-old-eq" />`
+}
+
+function guides(pt) {
+  if (!pt) return ''
+  return [
+    line(X(0), Y(pt.y), X(pt.x), Y(pt.y), 'guide'),
+    line(X(pt.x), Y(0), X(pt.x), Y(pt.y), 'guide'),
+  ].join('')
+}
+
+// ------------------------------------------------------------
+// 变体：带移动与新旧均衡的图形题
+// ------------------------------------------------------------
+function bondSupplyUp() {
+  const D = { p1: { x: 0.14, y: 0.8 }, p2: { x: 0.86, y: 0.18 } }
+  const S = { p1: { x: 0.14, y: 0.24 }, p2: { x: 0.82, y: 0.9 } }
+  const S2 = { p1: { x: 0.3, y: 0.24 }, p2: { x: 0.98, y: 0.9 } }
+  const before = intersect(D, S)
+  const after = intersect(D, S2)
+  return figure(
+    [
+      frame({ yLabel: '债券价格 P', xLabel: '债券数量 Q' }),
+      seg(D.p1, D.p2, 'curve'),
+      seg(S.p1, S.p2, 'curve'),
+      seg(S2.p1, S2.p2, 'shift'),
+      guides(before),
+      guides(after),
+      oldPoint(before),
+      dot(X(after.x), Y(after.y)),
+      label(X(0.15), Y(0.85), 'D', 'curve-label', 'start'),
+      label(X(0.12), Y(0.18), 'S', 'curve-label', 'end'),
+      label(X(0.33), Y(0.18), "S′", 'shift-label', 'start'),
+    ].join(''),
+  )
+}
+
+function moneySupplyUp() {
+  const MD = { p1: { x: 0.14, y: 0.86 }, p2: { x: 0.92, y: 0.14 } }
+  const MS = { p1: { x: 0.52, y: 0.08 }, p2: { x: 0.52, y: 0.92 } }
+  const MS2 = { p1: { x: 0.72, y: 0.08 }, p2: { x: 0.72, y: 0.92 } }
+  const before = intersect(MD, MS)
+  const after = intersect(MD, MS2)
+  return figure(
+    [
+      frame({ yLabel: '利率 i', xLabel: '货币数量 M' }),
+      seg(MD.p1, MD.p2, 'curve'),
+      line(X(0.52), Y(0.08), X(0.52), Y(0.92), 'vertical'),
+      line(X(0.72), Y(0.08), X(0.72), Y(0.92), 'shift'),
+      guides(before),
+      guides(after),
+      oldPoint(before),
+      dot(X(after.x), Y(after.y)),
+      label(X(0.15), Y(0.9), 'MD', 'curve-label', 'start'),
+      label(X(0.5), Y(0.95), 'MS', 'curve-label', 'end'),
+      label(X(0.74), Y(0.95), "MS′", 'shift-label', 'start'),
+    ].join(''),
+  )
+}
+
+function isCurveRight() {
+  const IS = { p1: { x: 0.16, y: 0.78 }, p2: { x: 0.88, y: 0.22 } }
+  const IS2 = { p1: { x: 0.34, y: 0.78 }, p2: { x: 0.98, y: 0.22 } }
+  const MP = { p1: { x: 0.08, y: 0.46 }, p2: { x: 0.98, y: 0.46 } }
+  const before = intersect(IS, MP)
+  const after = intersect(IS2, MP)
+  return figure(
+    [
+      frame({ yLabel: '实际利率 r', xLabel: '总产出 Y' }),
+      seg(IS.p1, IS.p2, 'curve'),
+      seg(IS2.p1, IS2.p2, 'shift'),
+      line(X(0.08), Y(0.46), X(0.98), Y(0.46), 'vertical'),
+      guides(before),
+      guides(after),
+      oldPoint(before),
+      dot(X(after.x), Y(after.y)),
+      label(X(0.3), Y(0.6), 'IS', 'curve-label', 'start'),
+      label(X(0.96), Y(0.72), "IS′", 'shift-label', 'end'),
+      label(X(0.9), Y(0.42), 'MP', 'curve-label', 'end'),
+    ].join(''),
+  )
+}
+
+function adShiftLeft() {
+  const AD = { p1: { x: 0.12, y: 0.84 }, p2: { x: 0.92, y: 0.2 } }
+  const AD2 = { p1: { x: 0.02, y: 0.84 }, p2: { x: 0.82, y: 0.2 } }
+  const AS = { p1: { x: 0.14, y: 0.18 }, p2: { x: 0.86, y: 0.86 } }
+  const before = intersect(AD, AS)
+  const after = intersect(AD2, AS)
+  return figure(
+    [
+      frame({ yLabel: '物价水平 P', xLabel: '总产出 Y' }),
+      seg(AD.p1, AD.p2, 'curve'),
+      seg(AD2.p1, AD2.p2, 'shift'),
+      seg(AS.p1, AS.p2, 'curve-blue'),
+      guides(before),
+      guides(after),
+      oldPoint(before),
+      dot(X(after.x), Y(after.y)),
+      label(X(0.9), Y(0.13), 'AD', 'curve-label', 'end'),
+      label(X(0.1), Y(0.91), "AD′", 'shift-label', 'start'),
+      label(X(0.82), Y(0.9), '短期 AS', 'curve-label', 'start'),
+    ].join(''),
+  )
+}
+
+function asShiftLeft() {
+  const AD = { p1: { x: 0.12, y: 0.84 }, p2: { x: 0.92, y: 0.2 } }
+  const AS = { p1: { x: 0.14, y: 0.18 }, p2: { x: 0.86, y: 0.86 } }
+  const AS2 = { p1: { x: 0.02, y: 0.18 }, p2: { x: 0.74, y: 0.86 } }
+  const before = intersect(AD, AS)
+  const after = intersect(AD, AS2)
+  return figure(
+    [
+      frame({ yLabel: '物价水平 P', xLabel: '总产出 Y' }),
+      seg(AD.p1, AD.p2, 'curve'),
+      seg(AS.p1, AS.p2, 'curve-blue'),
+      seg(AS2.p1, AS2.p2, 'shift'),
+      guides(before),
+      guides(after),
+      oldPoint(before),
+      dot(X(after.x), Y(after.y)),
+      label(X(0.9), Y(0.13), 'AD', 'curve-label', 'end'),
+      label(X(0.8), Y(0.9), '短期 AS', 'curve-label', 'start'),
+      label(X(0.72), Y(0.93), "AS′", 'shift-label', 'end'),
+    ].join(''),
+  )
+}
+
+function fxDemandDown() {
+  const D = { p1: { x: 0.14, y: 0.8 }, p2: { x: 0.9, y: 0.18 } }
+  const D2 = { p1: { x: 0.02, y: 0.8 }, p2: { x: 0.78, y: 0.18 } }
+  const S = { p1: { x: 0.58, y: 0.08 }, p2: { x: 0.58, y: 0.92 } }
+  const before = intersect(D, S)
+  const after = intersect(D2, S)
+  return figure(
+    [
+      frame({ yLabel: '汇率 E（本币/外币）', xLabel: '外币资产数量' }),
+      seg(D.p1, D.p2, 'curve'),
+      seg(D2.p1, D2.p2, 'shift'),
+      line(X(0.58), Y(0.08), X(0.58), Y(0.92), 'vertical'),
+      guides(before),
+      guides(after),
+      oldPoint(before),
+      dot(X(after.x), Y(after.y)),
+      label(X(0.9), Y(0.24), 'D', 'curve-label', 'end'),
+      label(X(0.6), Y(0.95), 'S', 'curve-label', 'start'),
+      label(X(0.04), Y(0.87), "D′", 'shift-label', 'start'),
+    ].join(''),
+  )
+}
+
 const CHARTS = {
   'bond-market': bondMarket,
+  'bond-supply-up': bondSupplyUp,
   'liquidity-pref': liquidityPref,
+  'money-supply-up': moneySupplyUp,
   'yield-curve': yieldCurve,
   'reserve-market': reserveMarket,
   'is-curve': isCurve,
+  'is-curve-right': isCurveRight,
   'ad-as': adAs,
+  'ad-shift-left': adShiftLeft,
+  'as-shift-left': asShiftLeft,
   'fx-market': fxMarket,
+  'fx-demand-down': fxDemandDown,
 }
 
 export const CHART_NAMES = Object.keys(CHARTS)

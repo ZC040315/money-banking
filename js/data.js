@@ -130,6 +130,11 @@ export function chapterQuiz(chapterId, count = 6) {
   return shuffleSlice(pool, count)
 }
 
+// 图形题：只取真正的题目（不含卡片速测），用于「图形题专项」
+export function chartQuestionPool() {
+  return allTestables().filter((item) => item.kind === 'question' && item.chart)
+}
+
 export function weeklyQuiz(count = 20) {
   return shuffleSlice(allTestables(), count)
 }
