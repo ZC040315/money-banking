@@ -171,7 +171,8 @@ node scripts/check.mjs   # 数据完整性 + 25 章 + 75 卡 + 125 题逐页渲�
 node scripts/qa.mjs      # 需要 Chrome：桌面/移动视口截图、点击流程、横向溢出与 JS 报错
 ```
 
-`qa.mjs` 会把截图写到 `../_research/shots/mb2/`，并在控制台报告：
+`qa.mjs` 会把截图写到项目外的 `../_research/shots/mb2/`（第 1 个参数改目录，第 2 个参数改被测地址，
+例如传 `https://zc040315.github.io/money-banking/` 就能直接检查线上站点），并在控制台报告：
 某页横向溢出（`scrollWidth > innerWidth`）或页面抛错。交付前两个脚本都应该是绿的。
 
 ---
