@@ -91,7 +91,7 @@ export function testCenter(ctx) {
     <div class="test-center__grid">
       <section class="test-card">
         <h2 class="test-card__title">章节测试</h2>
-        <p class="test-card__desc">从所选章节抽最多 6 道可判分题（选择 / 判断 / 报表），快速检验单章。</p>
+        <p class="test-card__desc">从所选章节抽 10 道可判分题（选择 / 判断 / 报表），快速检验单章。</p>
         <label class="test-card__select">
           <span>选择章节</span>
           <select data-action="test-chapter-select">
@@ -105,8 +105,7 @@ export function testCenter(ctx) {
               .join('')}
           </select>
         </label>
-        <button type="button" class="btn btn--primary" data-action="start-chapter-test">开始章节测试</button>
-      </section>
+        <button type="button" class="btn btn--primary" data-action="start-chapter-test">开始章节测试</button>      </section>
 
       <section class="test-card">
         <h2 class="test-card__title">综合卷</h2>

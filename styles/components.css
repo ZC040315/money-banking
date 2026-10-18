@@ -1120,6 +1120,24 @@
   font-weight: 700;
 }
 
+.practice__total {
+  margin-left: var(--space-2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-3);
+}
+
+.practice__filter-count {
+  margin-left: 4px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+}
+
+.practice__filter--active .practice__filter-count {
+  opacity: 0.9;
+}
+
 .practice__desc {
   margin: var(--space-1) 0 0;
   color: var(--color-text-3);
@@ -1130,6 +1148,12 @@
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+
+.practice__head > div:first-child {
+  min-width: 0;
 }
 
 .practice__filter {

@@ -457,20 +457,36 @@ export function chapterPage(ctx) {
   const chapter = chapterById.get(route.params.id) ?? chapters[0]
   const mastery = chapterMastery(chapter.cards)
   const answered = chapter.cards.filter((card) => state.progress[card.id]?.attempts > 0).length
+  const DIFF_ORDER = { basic: 0, advanced: 1, challenge: 2 }
+  const sortedQuestions = [...chapter.questions].sort(
+    (a, b) =>
+      (DIFF_ORDER[a.difficulty] ?? 9) - (DIFF_ORDER[b.difficulty] ?? 9) ||
+      a.id.localeCompare(b.id, 'en', { numeric: true }),
+  )
+  const counts = {
+    all: sortedQuestions.length,
+    basic: sortedQuestions.filter((q) => q.difficulty === 'basic').length,
+    advanced: sortedQuestions.filter((q) => q.difficulty === 'advanced').length,
+    challenge: sortedQuestions.filter((q) => q.difficulty === 'challenge').length,
+    chart: sortedQuestions.filter((q) => q.chart).length,
+  }
   const filters = [
     { key: 'all', label: '全部' },
     { key: 'basic', label: '基础' },
     { key: 'advanced', label: '进阶' },
     { key: 'challenge', label: '疑难' },
-    ...(chapter.questions.some((q) => q.chart) ? [{ key: 'chart', label: '图形' }] : []),
-  ]
-  const visible = chapter.questions.filter((q) =>
+    ...(counts.chart ? [{ key: 'chart', label: '图形' }] : []),
+  ].map((item) => ({ ...item, count: counts[item.key] }))
+  const visible = sortedQuestions.filter((q) =>
     ui.filter === 'all'
       ? true
       : ui.filter === 'chart'
         ? Boolean(q.chart)
         : q.difficulty === ui.filter,
   )
+  const PRACTICE_LIMIT = 10
+  const shown = ui.expanded ? visible : visible.slice(0, PRACTICE_LIMIT)
+  const hiddenCount = visible.length - shown.length
 
   return `<article class="chapter-detail">
     <header>
@@ -493,7 +509,7 @@ export function chapterPage(ctx) {
     <section class="practice">
       <div class="practice__head">
         <div>
-          <h2 class="practice__title">分层题库</h2>
+          <h2 class="practice__title">分层题库<span class="practice__total">${counts.all} 题</span></h2>
           <p class="practice__desc">基础 / 进阶 / 疑难三档；问答题先自己写，再对照参考答案自评</p>
         </div>
         <div class="practice__filters">
@@ -502,13 +518,18 @@ export function chapterPage(ctx) {
               (f) =>
                 `<button type="button" class="practice__filter${
                   ui.filter === f.key ? ' practice__filter--active' : ''
-                }" data-action="filter" data-filter="${f.key}">${f.label}</button>`,
+                }" data-action="filter" data-filter="${f.key}">${f.label}<span class="practice__filter-count">${f.count}</span></button>`,
             )
             .join('')}
         </div>
       </div>
       <div class="practice__list">
-        ${visible.map((q, index) => questionCard(ctx, q, index)).join('')}
+        ${shown.map((q, index) => questionCard(ctx, q, index)).join('')}
+        ${
+          hiddenCount > 0
+            ? `<button type="button" class="btn btn--ghost btn--block" data-action="expand-practice">展开剩余 ${hiddenCount} 题</button>`
+            : ''
+        }
       </div>
     </section>
 

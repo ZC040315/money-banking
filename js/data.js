@@ -5,12 +5,15 @@ import { part3 } from '../data/part3.js'
 import { part4 } from '../data/part4.js'
 import { part5 } from '../data/part5.js'
 import { part6 } from '../data/part6.js'
+import { extraQuestions } from '../data/extra/_index.js'
 
 export const curriculum = [part1, part2, part3, part4, part5, part6]
 
 export const chapters = curriculum.flatMap((part) =>
   part.chapters.map((ch) => ({
     ...ch,
+    // 题库 = 章节自带题 + data/extra/chNN.js 扩充题
+    questions: [...ch.questions, ...(extraQuestions[ch.id] || [])],
     partId: part.id,
     partTitle: part.title,
     partNum: part.num,

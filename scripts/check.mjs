@@ -21,6 +21,8 @@ import { homePage, knowledgeMapPage, chapterPage, knowledgePage, reviewPage, che
 import { testCenter, testSession, mistakeEntries } from '../js/views/tests.js'
 
 const problems = []
+const PARTIAL = process.argv.includes('--partial')
+const shortChapters = []
 function check(condition, message) {
   if (!condition) problems.push(message)
 }
@@ -39,7 +41,12 @@ for (const ch of chapters) {
   check(!chapterIds.has(ch.id), `章 id 重复：${ch.id}`)
   chapterIds.add(ch.id)
   check(ch.cards.length >= 3, `${ch.id} 卡片不足 3 张`)
-  check(ch.questions.length >= 5, `${ch.id} 题目不足 5 道`)
+  if (ch.questions.length >= 20) {
+    // 达标
+  } else {
+    shortChapters.push(`${ch.id}(${ch.questions.length})`)
+    if (!PARTIAL) check(false, `${ch.id} 题目不足 20 道（当前 ${ch.questions.length}）`)
+  }
   check(Boolean(ch.intro), `${ch.id} 缺少 intro`)
 
   for (const card of ch.cards) {
@@ -239,3 +246,7 @@ if (problems.length) {
 console.log('✓ 数据与渲染自检通过')
 console.log(`  篇 ${totals.parts} · 章 ${totals.chapters} · 回忆卡 ${totals.cards} · 题目 ${totals.questions}`)
 console.log(`  可判分题 ${testables.length} · 成就 ${ACHIEVEMENTS.length} · 图表 ${CHART_NAMES.length}`)
+console.log(
+  `  题库进度：${chapters.length - shortChapters.length}/${chapters.length} 章达到 20 题` +
+    (shortChapters.length ? `（待补：${shortChapters.join(' ')}）` : ''),
+)

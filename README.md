@@ -12,16 +12,16 @@
 ## 1. 它解决什么问题
 
 教材很厚，但复习时真正需要的是三件事：**先回忆、再验证、按遗忘曲线回来**。
-所以这个站不是把书搬上网，而是把 25 章压缩成 75 张「回忆卡」与 132 道分层题：
+所以这个站不是把书搬上网，而是把 25 章压缩成 75 张「回忆卡」与 **682 道分层题（每章 27–28 道）**：
 
 | 层 | 内容 | 入口 |
 |---|---|---|
-| 章 | 25 章，每章有导语、考点标签、3 张回忆卡、5–6 道分层题 | `#/chapter/ch4` |
+| 章 | 25 章，每章有导语、考点标签、3 张回忆卡、27–28 道题 | `#/chapter/ch4` |
 | 卡 | 每张卡 = 一句提示 → 一句话定义 → 例子/机制 → 公式 → 速测题 | `#/knowledge/ch5-c1` |
 | 题 | 基础 / 进阶 / 疑难；选择、判断、问答、报表、**图形**五类 | 章节页「分层题库」 |
 | 图 | **8 道图形题**：13 张内联 SVG，含 6 张「移动 + 新旧均衡」变体 | 章节页 + `#/test` 图形题专项 |
 | 复习 | 利特纳盒子 5 层，间隔 1 → 2 → 4 → 8 → 16 天 | `#/review` |
-| 测 | 章节测试（6 题）、综合卷（20 题）、图形题专项、错题重做 | `#/test` |
+| 测 | 章节测试（10 题）、综合卷（20 题）、图形题专项、错题重做 | `#/test` |
 
 ---
 
@@ -56,10 +56,16 @@ money-banking/
 │       ├── pages.js      首页 / 地图 / 章节 / 知识点 / 复习 / 速查
 │       └── tests.js      测试中心 / 测试会话 / 成绩页
 ├── data/
-│   ├── part1.js … part6.js   六篇正文（卡片 + 题目）
+│   ├── part1.js … part6.js   六篇正文（导语、卡片、原创题）
+│   └── extra/
+│       ├── ch01.js … ch25.js 每章 22 道扩充题
+│       └── _index.js         自动生成，汇总 25 章扩充题
 └── scripts/
-    ├── check.mjs         数据校验 + 全页面渲染冒烟（Node）
-    └── qa.mjs            真实浏览器：移动端视口、点击、截图、溢出与报错检查
+    ├── check.mjs              数据校验 + 全页面渲染冒烟（Node）
+    ├── check-extra.mjs        单章题库校验（题量、选项、答案分布、重复题干）
+    ├── build-extra-index.mjs  扫描 data/extra 重建 _index.js
+    ├── extract_office.py      从 pptx/docx 抽取讲义文本
+    └── qa.mjs                 真实浏览器：移动端视口、点击、截图、溢出与报错检查
 ```
 
 ---
@@ -156,7 +162,8 @@ export const part4 = {
 约定（`scripts/check.mjs` 会强制校验）：
 
 - 章的 id 用 `ch` + 数字，卡用 `章id-c序号`，题用 `章id-q序号`
-- 每章至少 3 张卡、5 道题；选择题必须 4 个不重复选项，`answer` 是下标
+- 每章至少 3 张卡、27 道题（`data/partN.js` 里的 5–6 道 + `data/extra/chNN.js` 的 22 道）；
+  选择题必须 4 个不重复选项，`answer` 是下标
 - 判断题 `answer` 是布尔值；问答题必须有 `reference`；报表题必须有 `table`
 - `related` 只能指向真实存在的卡 id；`chart` 只能取 `js/charts.js` 里已有的名字
 
@@ -172,13 +179,44 @@ python scripts/extract_office.py ../讲义 -o ../讲义/_extracted
 会把 pptx/docx 按页抽成纯文本（标题、正文、表格都保留），方便逐章对照着改卡片与「考试重点」。
 PDF 直接发页面截图即可，图片我能读。
 
+### 扩充题库（data/extra/）
+
+每章另有 22 道扩充题，放在 `data/extra/chNN.js`，字段与 `part*.js` 的 questions 完全一致：
+
+```js
+export const extra = [
+  { id: 'ch8-e01', difficulty: 'basic', type: 'choice', prompt: '…',
+    options: ['…', '…', '…', '…'], answer: 0, explanation: '…' },
+  { id: 'ch8-e09', difficulty: 'advanced', type: 'truefalse', prompt: '判断题：…',
+    answer: true, explanation: '…' },
+  { id: 'ch8-e21', difficulty: 'challenge', type: 'essay', prompt: '简答题：…',
+    hint: '…', reference: '…' },
+  { id: 'ch8-e22', difficulty: 'advanced', type: 'report', answerMode: 'choice',
+    table: { title: '表：…', columns: ['…'], rows: [['…']] },
+    options: ['…', '…', '…', '…'], answer: 2, explanation: '…' },
+]
+```
+
+改完跑三步：
+
+```bash
+node scripts/check-extra.mjs data/extra/ch08.js   # 单章：题量、选项、答案分布、重复题干
+node scripts/build-extra-index.mjs                 # 重建 data/extra/_index.js
+node scripts/check.mjs                             # 全站
+```
+
+配比约定（校验器会强制）：选择题 8 基础 / 6 进阶 / 2 疑难，判断题 3，问答题 2，报表题 1；
+正确答案在 0–3 间分布，不能 60% 以上集中在同一项；解析 ≥25 字且讲「为什么」。
+
 ---
 
 ## 7. 自检
 
 ```bash
-node scripts/check.mjs   # 数据完整性 + 25 章 + 75 卡 + 125 题逐页渲染冒烟
-node scripts/qa.mjs      # 需要 Chrome：桌面/移动视口截图、点击流程、横向溢出与 JS 报错
+node scripts/check.mjs            # 全量：数据完整性 + 25 章逐页渲染冒烟（要求每章 ≥20 题）
+node scripts/check.mjs --partial  # 扩容过程中用：未满 20 题的章节只提示、不报错
+node scripts/check-extra.mjs      # 单章题库校验（可传多个文件）
+node scripts/qa.mjs               # 需要 Chrome：桌面/移动视口截图、点击流程、横向溢出与 JS 报错
 ```
 
 `qa.mjs` 会把截图写到项目外的 `../_research/shots/mb2/`（第 1 个参数改目录，第 2 个参数改被测地址，
@@ -219,6 +257,8 @@ git push -u origin main
 ## 9. 已知边界
 
 - 进度只在本机浏览器：换设备、换浏览器、清站点数据都会丢（没有后端，这是设计取舍）
+- 题库里的 550 道扩充题是**按教材口径生成的应试向整理**，不是老师出题的原文；
+  建议对照讲义过一遍，发现错题直接改 `data/extra/chNN.js` 里对应那条即可
 - 没有视频：教材配套视频的链接需要你自己补，`cards` 里加字段再接一个 `<iframe>` 即可
 - 地图在手机上需要横向拖动：25 章 × 75 个知识点放不进 390px 宽，这是刻意保留的「可平移」
 - 内容为应试向的原创整理，公式与结论按第十一版教材口径；如与你的课堂讲义冲突，以讲义为准

@@ -34,6 +34,7 @@ const ui = {
   answers: {},
   selfcheck: {},
   filter: 'all',
+  expanded: false,
   query: '',
   searchOpen: false,
   testChapter: 'ch1',
@@ -290,7 +291,11 @@ function restartSession() {
   const session = ui.session
   if (!session) return
   if (session.kind === 'chapter') {
-    startSession({ ...session, route: `#/test/chapter/${session.chapterId}` }, chapterQuiz(session.chapterId, 6), session.title)
+    startSession(
+      { ...session, route: `#/test/chapter/${session.chapterId}` },
+      chapterQuiz(session.chapterId, 10),
+      session.title,
+    )
   } else if (session.kind === 'weekly') {
     startSession({ ...session, route: '#/test/weekly' }, weeklyQuiz(20), session.title)
   } else if (session.kind === 'chart') {
@@ -375,6 +380,11 @@ document.addEventListener('click', (event) => {
       return
     case 'filter':
       ui.filter = el.dataset.filter
+      ui.expanded = false
+      render()
+      return
+    case 'expand-practice':
+      ui.expanded = true
       render()
       return
     case 'start-review':
@@ -393,7 +403,7 @@ document.addEventListener('click', (event) => {
       return
     case 'start-chapter-test': {
       const chapter = chapterById.get(ui.testChapter) ?? curriculum[0].chapters[0]
-      const items = chapterQuiz(chapter.id, 6)
+      const items = chapterQuiz(chapter.id, 10)
       startSession(
         { kind: 'chapter', chapterId: chapter.id, route: `#/test/chapter/${chapter.id}` },
         items,
@@ -472,6 +482,8 @@ document.addEventListener('keydown', (event) => {
 
 window.addEventListener('hashchange', () => {
   ui.searchOpen = false
+  ui.expanded = false
+  ui.filter = 'all'
   render()
 })
 
